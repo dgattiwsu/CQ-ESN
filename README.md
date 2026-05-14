@@ -75,7 +75,7 @@ Lagged data is prepared as a single Pytorch **dataset** and **dataloader**, whic
 
 States update is carried out according to the ESN formula:
 
-$$\mathbf{x}(t) = (1 - \alpha) \mathbf{x}(t-1) + \alpha \tanh(\mathbf{W}_{\text{in}} \mathbf{u}(t) + \mathbf{W}_{\text{res}} \mathbf{x}(t-1) + \mathbf{b})$$
+$\mathbf{x}(t) = (1 - \alpha) \mathbf{x}(t-1) + \alpha \tanh(\mathbf{W}_{\text{in}} \mathbf{u}(t) + \mathbf{W}_{\text{res}} \mathbf{x}(t-1) + \mathbf{b})$
 
 <center><img src="IMAGES/ESN_1.png" width="600"/></center>
 
@@ -107,20 +107,20 @@ After training we typically carry out two types of predictions on the **training
 
 1. starting from the ***first lag*** we predict the horizon values for both the training and validation datasets using the trained models in a ***non-autoregressive*** fashion. This allows us to evaluate the performance of the models on both datasets without compounding errors from previous predictions. If each sequence timestep if $f$-dimensional, the model will output an $f$-dimensional prediction for each rollout timestep. It should be noted this can be done **with** or **without** <u>updating</u> the training states of the ESN during roll-over prediction. If we are **not updating** the states during prediction roll-over, at every stepsize the model will use the states finalized during training in the update formula:
 
-$$\mathbf{x}(t) = (1 - \alpha) \mathbf{x}_{\text{train}} + \alpha \tanh(\mathbf{W}_{\text{in}} \mathbf{u}(t) + \mathbf{W}_{\text{res}} \mathbf{x}(t-1) + \mathbf{b})$$
+$\mathbf{x}(t) = (1 - \alpha) \mathbf{x}_{\text{train}} + \alpha \tanh(\mathbf{W}_{\text{in}} \mathbf{u}(t) + \mathbf{W}_{\text{res}} \mathbf{x}(t-1) + \mathbf{b})$
 
-$$\hat{\mathbf{y}}(t) = \mathbf{W}_{\text{out}} \mathbf{x}(t)$$
+$\hat{\mathbf{y}}(t) = \mathbf{W}_{\text{out}} \mathbf{x}(t)$
 
 <div style="margin-left: 40px;">
 
 This means that predictions will be most accurate only in the part of the training or validation data that is most similar to the part of the training data in which the states were finalized. Instead, if we are **updating** during prediction roll-over, at every stepsize the model will use the states from the previous time step to update the training state:
 </div>
 
-$$\mathbf{x}(t) = (1 - \alpha) \mathbf{x}_{\text{train}} + \alpha \tanh(\mathbf{W}_{\text{in}} \mathbf{u}(t) + \mathbf{W}_{\text{res}} \mathbf{x}(t-1) + \mathbf{b})$$
+$\mathbf{x}(t) = (1 - \alpha) \mathbf{x}_{\text{train}} + \alpha \tanh(\mathbf{W}_{\text{in}} \mathbf{u}(t) + \mathbf{W}_{\text{res}} \mathbf{x}(t-1) + \mathbf{b})$
 
-$$\hat{\mathbf{y}}(t) = \mathbf{W}_{\text{out}} \mathbf{x}(t)$$
+$\hat{\mathbf{y}}(t) = \mathbf{W}_{\text{out}} \mathbf{x}(t)$
 
-$$\mathbf{x}_{\text{train}} = \mathbf{x}(t)$$
+$\mathbf{x}_{\text{train}} = \mathbf{x}(t)$
 
 <div style="margin-left: 40px;">
 This means that the states will adapt to the new input data, allowing the model to make more accurate predictions. Ideally, since the ESN states keep a *memory* of the training input data, we expect predictions to be reasonably accurate as the models starts from the beginning of the training set and rolls through the rest of the training set, and to become progressively less accurate after the model transitions in the validation set, since the model has not seen the validation data during training.
@@ -306,7 +306,7 @@ There are several common ways to calculate NRMSE, depending on the normalization
 *CQ-ESN Implementation*
 - $\text{NRMSE}(j)$ is the normalized root-mean-square error of sample forecast $j$, which is
   defined as follows
-  $$
+  $
   \text{NRMSE}(j) = \sqrt{
       \dfrac{1}{N_v N_\text{steps}}
       \sum_{n=1}^{N_\text{steps}}
@@ -314,7 +314,7 @@ There are several common ways to calculate NRMSE, depending on the normalization
       \left(
           \dfrac{\hat{v}_j(i, n) - v_j(i, n)}{SD_j}
       \right)^2 } \, ,
-  $$
+  $
   where
   
   - $i$ is the index for each non-time index ($N_v = 12$ in our example)
@@ -325,14 +325,14 @@ There are several common ways to calculate NRMSE, depending on the normalization
   - $j$ is the index for each sample forecast
   
   - $SD_j$ is the standard deviation of the sample forecast, taken over space and time
-   $$
+  $
    SD_j = \sqrt{
     \dfrac{
         \sum_{i=1}^{N_v}\sum_{n=1}^{N_{\text{steps}}}\left(v_j(i, n) - \mu_j\right)^2
        }
        {(N_{\text{steps}}-1)(N_v-1)}
         }
-   $$
+   $
    where $\mu_j$ is the sample average taken over space and time
    $\mu_j =
    \dfrac{1}{N_v N_\text{steps}}
@@ -345,7 +345,7 @@ There are several common ways to calculate NRMSE, depending on the normalization
    
 - $\text{PSD}\_\text{NRMSE}(j)$ is the NRMSE of the Power Spectral Density (PSD) for each sample, which is defined as follows:
   
-  $$
+  $
   \text{PSD}\_\text{NRMSE}(j) = \sqrt{
       \dfrac{1}{N_K N_\text{steps}}
       \sum_{n=1}^{N_\text{steps}}
@@ -353,7 +353,7 @@ There are several common ways to calculate NRMSE, depending on the normalization
       \left(
           \dfrac{\hat{\psi}_j(k, n) - \psi_j(k, n)}{SD_j(k)}
       \right)^2 } \, ,
-  $$
+  $
   where
   
   - indices $j$, $n$ are the same as for NRMSE
@@ -470,25 +470,25 @@ In order to calculate a single kernel matrix element, we will want to encode two
 
 For the task of generating a kernel matrix, we are particularly interested in the probability of measuring the $|0\rangle^{\otimes N}$ state, in which all $N$ qubits are in the $|0\rangle$ state. To see this, consider that the circuit responsible for encoding and mapping of one data vector $\vec{x}_i$ can be written as $\Phi(\vec{x}_i)$, and the one responsible for encoding and mapping $\vec{x}_j$ is $\Phi(\vec{x}_j)$, and denote the mapped states
 
-$$
+$
 |\psi(\vec{x}_i)\rangle = \Phi(\vec{x}_i)|0\rangle^{\otimes N}
-$$
+$
 
-$$
+$
 |\psi(\vec{x}_j)\rangle = \Phi(\vec{x}_j)|0\rangle^{\otimes N}.
-$$
+$
 
 These states *are* the mapping of the data to higher dimensions, so our desired kernel entry is the inner product
 
-$$
+$
 \langle\psi(\vec{x}_j)|\psi(\vec{x}_i)\rangle = \langle 0 |^{\otimes N}\Phi^\dagger(\vec{x}_j)\Phi(\vec{x}_i)|0\rangle^{\otimes N}.
-$$
+$
 
 If we operate on the default initial state $|0\rangle^{\otimes N}$ with both circuits $\Phi^\dagger(\vec{x}_j)$ and $\Phi(\vec{x}_i)$, the probability of then measuring the state $|0\rangle^{\otimes N}$ is
 
-$$
+$
 P_0 = |\langle0|^{\otimes N}\Phi^\dagger(\vec{x}_j)\Phi(\vec{x}_i)|0\rangle^{\otimes N}|^2.
-$$
+$
 
 This is exactly the value we want (up to $||^2$). The measurement layer of our circuit will return measurement probabilities (or so-called "quasi-probabilities", if certain error mitigation methods are used). The probability of interest is that of the zero state, $|0\rangle^{\otimes N}$.
 
@@ -496,23 +496,23 @@ This is exactly the value we want (up to $||^2$). The measurement layer of our c
 ##### IMPORTANT: Why is the kernel entry given by $P_0$ and not $\sqrt{P_0}$?
 
 The short answer is: in quantum kernel methods, the quantity used as the kernel is usually the **fidelity kernel**
-$$
+$
 K_{ij}=|\langle \psi(\vec x_j)\mid \psi(\vec x_i)\rangle|^2,
-$$
+$
 not the raw inner product itself.
 
 Why not the square root?
 1. The compute-uncompute circuit directly gives a measurement probability:
-$$
+$
 P_0=|\langle \psi_j|\psi_i\rangle|^2.
-$$
+$
 
 That is what the quantum hardware estimates robustly.
 
 2. Taking $\sqrt{P_0}$ gives only
-$$
+$
 |\langle \psi_j|\psi_i\rangle|,
-$$
+$
 which still loses phase/sign information, so it is still not the full complex dot product.
 
 3. Kernel methods (SVM, Kernel Ridge, etc.) do not require the literal dot product; they require a valid similarity kernel (symmetric, PSD). $|\langle\psi_j|\psi_i\rangle|^2$ is valid and commonly used.
