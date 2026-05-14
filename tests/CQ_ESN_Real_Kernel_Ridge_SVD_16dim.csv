@@ -1,0 +1,14 @@
+,  Non-autoregr,Non-autoregr,  Autoregr
+,   Train,     Validation,   Validation
+NRMSE (range),0.1273,0.1651,0.2039
+PSD-NRMSE (range),0.0261,0.1387,0.1486
+NRMSE (std),0.7467,1.0332,1.276
+PSD-NRMSE (std),0.3902,1.0335,1.1071
+MAE,0.2514,0.2779,0.3599
+SMAPE,96.537,27.0712,36.0862
+scaled IQR Area,0.1723,0.175,0.406
+scaled Min-Max Area,0.6201,0.6307,1.2518
+IQR Area,86.1441,38.5084,89.325
+Min-Max Area,310.0381,138.7465,275.3919
+Total Attempts,200.0,200.0,200.0
+Run Time (minutes),4.9469,4.9469,4.9469
