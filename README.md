@@ -75,7 +75,7 @@ Lagged data is prepared as a single Pytorch **dataset** and **dataloader**, whic
 
 States update is carried out according to the ESN formula:
 
-$\mathbf{x}(t) = (1 - \alpha) \mathbf{x}(t-1) + \alpha \tanh(\mathbf{W}_{\text{in}} \mathbf{u}(t) + \mathbf{W}_{\text{res}} \mathbf{x}(t-1) + \mathbf{b})$
+$\bf{x}(t) = (1 - \alpha) \bf{x}(t-1) + \alpha \tanh(\bf{W}_{\text{in}} \bf{u}(t) + \bf{W}_{\text{res}} \bf{x}(t-1) + \bf{b})$
 
 <center><img src="IMAGES/ESN_1.png" width="600"/></center>
 
