@@ -67,7 +67,7 @@ Note that this dataset is not ideal for forecasting, as it is relatively small (
 
 #### OUTCOME
 
-A very large number of different CQ-ESN settings (only a few of which are reported as examples in the **tests** folder) were tested. Altogether, the best results were obtained using:
+A very large number of different CQ-ESN settings (only a few of which are reported as examples in the **tests** folder) were evaluated. Altogether, the best results were obtained using:
 
 - Complex-valued reservoirs and states
 - Kernel Ridge Regression readout
@@ -78,7 +78,7 @@ A very large number of different CQ-ESN settings (only a few of which are report
 ##### Important considerations:
 
 1. **Complex-valued** reservoirs and states produce only a minor improvement of the evaluation metrics (NRMSE,MAE,IQR area) *versus* the corresponding **real-valued** reservoirs and states. 
-2. **Quantum kernels** do not appear to produce an improvement of the metrics versus the equivalent **Classical Kernels** with the additional drawback of several orders of magnitude slow-down.
+2. **Quantum kernels** (with different strategies of data encoding and qubits entanglement) do not appear to produce an improvement of the metrics versus the equivalent **Classical Kernels** with the additional drawback of several orders of magnitude slow-down.
 3. **States Normalization** and **Predictions Denormalization** appear to be the most significant factor in achieving a decrease of the Interquartile Area of the distribution of both ***non-autoregressive*** and ***autoregressive*** predictions, when multiple CQ-ESN runs (i.e., 200 trials in the examples of the **tests** folder) are carried out with random initialization of the reservoir parameters.
 
-
+In conclusion, while limited to experience with just the climate TAVG dataset, testing with CQ-ESN points to a possible avenue for ***dequantizing*** quantum-based ESN protocols, by adding <u>states normalization</u> to classical protocols with the goal of reducing prediction errors/uncertainties.  
