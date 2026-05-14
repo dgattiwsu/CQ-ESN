@@ -52,13 +52,13 @@ Additional details about CQ-ESN implementation can be found in the jupyter noteb
 
 #### CQ-ESN Forecasting strategy
 
-Several examples of how to run CQ-ESN for forecasting are provided in the jupyter notebooks inside the folder **TESTS**. The task at hand is to forecast global average surface temperatures (TAVG) using historical climate data provided by the [Berkeley Earth](https://berkeleyearth.org/data/) project.
+Several examples of how to run CQ-ESN for forecasting are provided in the jupyter notebooks inside the folder **tests**. The task at hand is to forecast global average surface temperatures (TAVG) using historical climate data provided by the [Berkeley Earth](https://berkeleyearth.org/data/) project.
 
 <center><img src="IMAGES/Berkeley_Global_TAVG_Temperature_and_Anomaly.png" width="1000"></center>
 
 The TAVG dataset used in the examples is a subset of the **global** average surface temperature dataset provided by the Berkeley Earth project. It contains monthly average temperatures from 1960 to 2020, measured in degrees Celsius. The original **global** dataset is expanded to include **local** climate data from 18 countries in different continents.
 
-<center><img src="IMAGES/dataframe_image.png" width="1000"></center>
+<center><img src="images/dataframe_image.png" width="1000"></center>
 
 The dataset is multivaried (global + local, 19 variables), but we focus on forecasting and plotting primarily the global average surface temperature (TAVG). Thus, while CQ-ESN forecasts all 19 variables in the **horizon** in order to roll forward by 1 timestep the **lag** of time used for prediction, only the global average surface temperature (TAVG) is plotted.
 
