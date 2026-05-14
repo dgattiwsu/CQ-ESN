@@ -193,3 +193,290 @@ We use `Pytorch Geometric` and `NetworkX` to generate the graph structure and Nu
 
 We test the effect of using ***real-valued*** vs. **complex-valued** weights in the ESN reservoir. Complex valued states generated when using a complex-valued reservoir allow ***interference*** to become a factor in the ridge regression readout. Besides allowing *interference* effects to occur, complex valued states can also be directly mapped to quantum states vectors using `amplitude encoding`, with or without additional gates in the feature mapping, specifically designed to achieve additional degrees or types of entanglement. Different types of quantum feature mapping (e.g., `efficient-su2`,`ZFeatureMap`, `ZZFeatureMap`, `PauliFeatureMap`, etc.) are possible with `qiskit`, although, when starting from complex-valued states, *amplitude encoding* is the most efficient, as it requires $\log_2(n)$ qubits, where $n$ is the dimension of the feature space. 
 
+<div style="border:1px solid #ccc; border-radius:6px; padding:12px; background: #050094; max-width:90%; margin-bottom:20px; margin-left:20px; margin-right:20px;">
+
+### Specialized Validation Metrics 
+
+We use two specialized validation metrics to evaluate the performance of the models: `NRMSE` and `PSD-NRMSE`.
+
+**`NRMSE`**, or `Normalized Root Mean Square Error`, is a statistical metric that measures the difference between predicted and observed values. It is calculated by dividing the Root Mean Square Error (RMSE) by a normalization factor, most commonly the range of the observed values (max - min) or the mean of the observed values. The result can be expressed as a percentage and is used to compare model performance across different scales by making the error relative to the data's magnitude. A lower NRMSE value indicates a better fit. 
+
+There are several common ways to calculate NRMSE, depending on the normalization method: 
+
+• By range: Divide the RMSE by the difference between the maximum and minimum observed values. 
+
+• By mean: Divide the RMSE by the mean of the observed values. 
+
+• By standard deviation: Divide the RMSE by the standard deviation of the observed values.   
+
+*Why we use NRMSE* 
+
+- Comparability: NRMSE is useful for comparing models that have different units or scales, which is a limitation of RMSE alone.
+- Error as a percentage: It can be interpreted as a percentage error, making it easier to understand the magnitude of the error relative to the data's variability.
+- Performance indicator: A lower NRMSE value indicates less residual variance and a better-performing model.  
+
+**`PSD‑NRMSE`** is the Normalized Root‑Mean‑Square Error between two power spectral density (PSD) estimates — i.e. a scalar measure of how different two spectra are, normalized so values are comparable across signals.
+
+*Why we use PSD-NRMSE*
+
+- `Power spectral density` (PSD) quantifies how a signal’s variance (power) is distributed over frequency. Units are signal_units^2 / Hz (power per unit frequency).
+- Reveals dominant periodicities and broadband energy; useful for noise characterization, filtering, model comparison.
+- 0 = perfect spectral match. Smaller values = better match of spectral content (frequency structure), independent of time‑domain phase/alignment.
+
+*CQ-ESN Implementation*
+- $\text{NRMSE}(j)$ is the normalized root-mean-square error of sample forecast $j$, which is
+  defined as follows
+  $$
+  \text{NRMSE}(j) = \sqrt{
+      \dfrac{1}{N_v N_\text{steps}}
+      \sum_{n=1}^{N_\text{steps}}
+      \sum_{i=1}^{N_v}
+      \left(
+          \dfrac{\hat{v}_j(i, n) - v_j(i, n)}{SD_j}
+      \right)^2 } \, ,
+  $$
+  where
+  
+  - $i$ is the index for each non-time index ($N_v = 12$ in our example)
+  
+  - $n$ is the temporal index, and $N_\text{steps}$ = `forecast_kwargs["n_steps"]` is the
+    length of each sample forecast in terms of the number of time steps
+    
+  - $j$ is the index for each sample forecast
+  
+  - $SD_j$ is the standard deviation of the sample forecast, taken over space and time
+   $$
+   SD_j = \sqrt{
+    \dfrac{
+        \sum_{i=1}^{N_v}\sum_{n=1}^{N_{\text{steps}}}\left(v_j(i, n) - \mu_j\right)^2
+       }
+       {(N_{\text{steps}}-1)(N_v-1)}
+        }
+   $$
+   where $\mu_j$ is the sample average taken over space and time
+   $\mu_j =
+   \dfrac{1}{N_v N_\text{steps}}
+   \sum_{n=1}^{N_\text{steps}}
+   \sum_{i=1}^{N_v}
+   v_j(i,n)$
+
+<br>
+</br>
+   
+- $\text{PSD}\_\text{NRMSE}(j)$ is the NRMSE of the Power Spectral Density (PSD) for each sample, which is defined as follows:
+  
+  $$
+  \text{PSD}\_\text{NRMSE}(j) = \sqrt{
+      \dfrac{1}{N_K N_\text{steps}}
+      \sum_{n=1}^{N_\text{steps}}
+      \sum_{i=1}^{N_K}
+      \left(
+          \dfrac{\hat{\psi}_j(k, n) - \psi_j(k, n)}{SD_j(k)}
+      \right)^2 } \, ,
+  $$
+  where
+  
+  - indices $j$, $n$ are the same as for NRMSE
+  
+  - $k$ is the index for each spectral mode of the PSD
+  
+  - $\psi_j(k,n)$ is the $k^{th}$ mode's amplitude, for sample $j$ at time step $n$
+  
+  - $SD_j(k)$ is defined similarly as above, but in spectral space, and note that each
+    mode is normalized separately as different modes can vary by vastly different orders of
+    magnitude
+    
+</div>
+
+<div style="border:1px solid #ccc; border-radius:6px; padding:12px; background: #050094; max-width:90%; margin-bottom:20px; margin-left:20px; margin-right:20px;">
+
+##### I. ESN STATES DIMENSIONALITY REDUCTION
+
+We have three strategies available for reducing the dimensionality of complex-valued ESN states:
+
+1. Standard **SVD**. Works well with complex data, but may not capture non-linear relationships.
+
+2. **UMAP**. Can capture non-linear relationships, but it's not capable of handling directly complex data. We can apply UMAP to the real and imaginary parts separately, or to the magnitude and phase, but the best way is to use an *ad hoc* distance matrix for complex vectors. In this case, we have the following options (all of them possible in CQ_ESN)
+
+    **A. Complex Euclidean Distance ($L_2$ Norm)**   
+    This is the standard, straight-line distance, representing the modulus of the difference between two complex points, $z = a+bi$ and $w = c+di$. 
+
+    • Formula: $d(z, w) = |z - w| = \sqrt{(a-c)^2 + (b-d)^2}$. 
+    • Best for: Low-dimensional data where magnitude is important. It works identically to 2D real space by treating the real and imaginary parts as separate dimensions. 
+    • Vector Form: For vectors $\mathbf{z}, \mathbf{w} \in \mathbb{C}^n$, the distance is $\|\mathbf{z}-\mathbf{w}\|_2 = \sqrt{\sum_{i=1}^n |z_i - w_i|^2}$.  
+
+    **B. Complex Mahalanobis Distance** 
+    Used when data features are correlated or have different scales. It adapts to the structure of the data by taking into account the covariance matrix, making it more accurate than Euclidean distance when data dimensions are not independent.
+
+    The Mahalanobis distance for complex-valued vectors measures the distance between a complex vector $z$ and a distribution (with mean $\mu$ and covariance matrix $\Gamma$) by accounting for the correlations and variances in the complex plane, often applied in signal processing to separate signals from noise.  
+
+    The squared Mahalanobis distance $D^2$ for a $p$-dimensional complex random vector $z \in \mathbb{C}^p$ is defined as:
+
+    $D^2(z) = (z - \mu)^* \Gamma^{-1} (z - \mu)$ 
+
+    * $z$: The complex vector of observation ($p \times 1$).
+    * $\mu$: The complex mean vector ($p \times 1$).
+    * $\Gamma$: The complex covariance matrix ($p \times p$), defined as $E[(z-\mu)(z-\mu)^*]$.
+    * $*$: The conjugate transpose operator (Hermitian transpose).
+
+    Distance Output: Although the input vectors and covariance matrices are complex, the resulting Mahalanobis distance $D$ (and $D^2$) is always a positive real number.
+
+
+    **C. Cosine Similarity / Distance** 
+    Used for high-dimensional data where the angle (phase) between vectors is more important than their absolute magnitude. 
+
+    • Formula: $1 - \frac{\mathbf{z} \cdot \mathbf{w}^*}{\|\mathbf{z}\| \|\mathbf{w}\|}$ (using complex conjugate $\mathbf{w}^*$). 
+    • Best for: Text analytics, recommendations, and high-dimensional semantic search.   
+
+    **D. Manhattan Distance ($L_1$ Norm)**   
+    Calculates the sum of the absolute differences, which can be more robust to outliers and better for high-dimensional data. 
+
+    • Formula: $\sum_{i=1}^n |z_i - w_i|$.  
+
+
+For most general purposes, the complex Euclidean distance is the standard starting point for complex-valued UMAP. Any of the distance matrices listed above can be used also for non-complex data, and may be worth exploring as alternatives to the standard Euclidean distance in UMAP for real-valued data as well.   
+
+
+</div>
+
+<div style="border:1px solid #ccc; border-radius:6px; padding:12px; background: #050094; max-width:90%; margin-bottom:20px; margin-left:20px; margin-right:20px;">
+
+##### II. FEATURE MAPPING AND ENTANGLEMENT 
+
+IBM Qiskit raw amplitude loaders like `raw_feature_vector`, `initialize`, and `StatePreparation` are all ways to prepare a target quantum state. They do not guarantee entanglement by themselves, since entanglement is a property of the encoded state vector, not the API call used.
+
+If the input complex vector is **separable**, no method will create entanglement unless extra entangling operations are added after encoding.
+
+Practical options:
+
+1. Keep amplitude encoding, then add an extra-entangling layer. Use amplitude loading first, then apply a fixed or data-dependent entangling ansatz (for example CZ/CX pattern, EfficientSU2-style entanglers, or ZZ-style block). This is the most direct way to enforce nontrivial multi-qubit correlations.
+
+2. Use explicit entangling feature maps instead of pure amplitude loading. Use maps such as EfficientSU2 or PauliFeatureMap on a real-valued embedding of the complex vector (for example, concatenate real and imaginary parts, or magnitude and phase). These maps include entangling gates by design.
+
+3. Manual kernel path with per-sample circuits. If we want an **overlap** workflow, build two concrete circuits per sample pair (state preparation + optional entangling layer), then compute **unitary_overlap** and estimate P(all zeros). 
+
+Key takeaway:
+- Amplitude encoding with RawFeatureVector can represent entangled states already.
+- If we need guaranteed entangling dynamics in the feature map circuit, we can add explicit entangling gates after amplitude loading or switch to an explicitly entangling feature-map family.
+
+
+##### CQ-ESN implementation.
+
+Currently, CQ-ESN uses either **amplitude encoding** (which can produce by itself some entanglement depending on the input states), or **efficient SU2** encoding, either one possibly followed by extra entangling gates (i.e., CX, CZ). For example, in the case of a 16-dimensional complex-valued vector, both mappings use only 4 qubits. 
+
+Direct amplitude encoding uses 4-qubits because:
+
+$\textit{n\_qubits}=\log_2(\textit{n\_features=16})$
+
+Efficient_su2 with 3 repetitions also uses 4-qubits according to the formula:
+
+$\textit{n\_qubits}=2*(\textit{n\_features=16})/(\textit{n\_reps=3}+1)$ 
+
+because each complex feature is represented by two real numbers.
+
+</div>
+
+<div style="border:1px solid #ccc; border-radius:6px; padding:12px; background: #050094; max-width:90%; margin-bottom:20px; margin-left:20px; margin-right:20px;">
+
+##### III. QUANTUM KERNELS
+
+The "Quantum kernel method" refers to any method that uses quantum computers to estimate a kernel. In this context, "kernel" will refer to the kernel matrix or individual entries therein. A feature mapping $\Phi(\vec{x})$ is a mapping from $\vec{x}\in \mathbb{R}^d$ to $\Phi(\vec{x})\in \mathbb{R}^{d'},$ where usually $d'>d$ and where the goal of this mapping is to make the categories of data separable by a hyperplane. The kernel function takes vectors in the feature-mapped space as arguments and returns their inner product, that is, $K:\mathbb{R}^d\times\mathbb{R}^d\rightarrow \mathbb{R}$ with $K(x,y) = \langle \Phi(x)|\Phi(y)\rangle$. Classically, we are interested in feature maps for which the kernel function is easy to evaluate. This often means finding a kernel function for which the inner product in the feature-mapped space can be written in terms of the original data vectors, without having to ever construct $\Phi(x)$ and $\Phi(y)$. In the method of quantum kernels, the feature mapping is done by a quantum circuit, and the kernel is estimated using measurements on that circuit and the relative measurement probabilities.
+
+Given the dataset, the starting point is to encode the data into a quantum circuit. In other words, we need to map our data into the Hilbert space of states of our quantum computer. We do this by constructing a data-dependent circuit. We can construct our own circuit to encode the data, or we can use a pre-made feature map like `efficient_su2`.
+
+In order to calculate a single kernel matrix element, we will want to encode two different points, so we can estimate their inner product. A full quantum kernel workflow will of course, involve many such inner products between mapped data vectors, as well as classical machine learning methods. But the core step being iterated is the estimation of a single kernel matrix element. For this we select a data-dependent quantum circuit and map two data vectors into the feature space.
+
+![Classical\_Review\_background\_kernel\_circuit](https://quantum.cloud.ibm.com/learning/images/courses/quantum-machine-learning/quantum-kernel-methods/classical-review-background-kernel-circuit.avif)
+
+For the task of generating a kernel matrix, we are particularly interested in the probability of measuring the $|0\rangle^{\otimes N}$ state, in which all $N$ qubits are in the $|0\rangle$ state. To see this, consider that the circuit responsible for encoding and mapping of one data vector $\vec{x}_i$ can be written as $\Phi(\vec{x}_i)$, and the one responsible for encoding and mapping $\vec{x}_j$ is $\Phi(\vec{x}_j)$, and denote the mapped states
+
+$$
+|\psi(\vec{x}_i)\rangle = \Phi(\vec{x}_i)|0\rangle^{\otimes N}
+$$
+
+$$
+|\psi(\vec{x}_j)\rangle = \Phi(\vec{x}_j)|0\rangle^{\otimes N}.
+$$
+
+These states *are* the mapping of the data to higher dimensions, so our desired kernel entry is the inner product
+
+$$
+\langle\psi(\vec{x}_j)|\psi(\vec{x}_i)\rangle = \langle 0 |^{\otimes N}\Phi^\dagger(\vec{x}_j)\Phi(\vec{x}_i)|0\rangle^{\otimes N}.
+$$
+
+If we operate on the default initial state $|0\rangle^{\otimes N}$ with both circuits $\Phi^\dagger(\vec{x}_j)$ and $\Phi(\vec{x}_i)$, the probability of then measuring the state $|0\rangle^{\otimes N}$ is
+
+$$
+P_0 = |\langle0|^{\otimes N}\Phi^\dagger(\vec{x}_j)\Phi(\vec{x}_i)|0\rangle^{\otimes N}|^2.
+$$
+
+This is exactly the value we want (up to $||^2$). The measurement layer of our circuit will return measurement probabilities (or so-called "quasi-probabilities", if certain error mitigation methods are used). The probability of interest is that of the zero state, $|0\rangle^{\otimes N}$.
+
+
+##### IMPORTANT: Why is the kernel entry given by $P_0$ and not $\sqrt{P_0}$?
+
+The short answer is: in quantum kernel methods, the quantity used as the kernel is usually the **fidelity kernel**
+$$
+K_{ij}=|\langle \psi(\vec x_j)\mid \psi(\vec x_i)\rangle|^2,
+$$
+not the raw inner product itself.
+
+Why not the square root?
+1. The compute-uncompute circuit directly gives a measurement probability:
+$$
+P_0=|\langle \psi_j|\psi_i\rangle|^2.
+$$
+
+That is what the quantum hardware estimates robustly.
+
+2. Taking $\sqrt{P_0}$ gives only
+$$
+|\langle \psi_j|\psi_i\rangle|,
+$$
+which still loses phase/sign information, so it is still not the full complex dot product.
+
+3. Kernel methods (SVM, Kernel Ridge, etc.) do not require the literal dot product; they require a valid similarity kernel (symmetric, PSD). $|\langle\psi_j|\psi_i\rangle|^2$ is valid and commonly used.
+
+How does this affect the kernel matrix?
+1. We are using a different feature map implicitly: fidelity in Hilbert space, not raw amplitude overlap.
+2. Entries remain in $[0,1]$ (for normalized states), with diagonal $K_{ii}=1$.
+3. Off-diagonal similarities are typically more suppressed (since squaring shrinks numbers in $(0,1)$), which changes decision boundaries but is mathematically fine.
+4. The matrix is still a proper Gram/kernel matrix for learning algorithms.
+
+So nothing is “fundamentally wrong” with not taking the square root, since we are intentionally using the *standard quantum fidelity kernel*. If we truly need $\langle\psi_j|\psi_i\rangle$ (real/imag parts), it becomes necessary to use a different measurement scheme (for example, Hadamard-test-style circuits), not just compute-uncompute probabilities.
+
+
+</div>
+
+<div style="border:1px solid #ccc; border-radius:6px; padding:12px; background: #050094; max-width:90%; margin-bottom:20px; margin-left:20px; margin-right:20px;">
+
+##### IV. QUANTUM KERNELS IN CQ-ESN USING QISKIT MACHINE LEARNING LIBRARY
+
+We use quantum kernels from Qiskit Machine Learning 0.9.0 to perform quantum ridge regression on the ESN states. The two main classes of quantum kernels are `FidelityQuantumKernel` and `FidelityStatevectorKernel`. The primary difference lies in their underlying execution model: the *FidelityQuantumKernel* is designed for general-purpose use on any backend (real hardware or simulators), while the *FidelityStatevectorKernel* is a specialized, high-performance reference implementation for classical simulation.  in both cases, the kernel function is defined as the overlap of two quantum states defined by a parametrized quantum circuit (the *feature map* $\phi(x)$) that encodes the input data into quantum states. The kernel function is given by:
+
+$K(x, x') = |\langle 0 | U^\dagger(\phi(x)) U(\phi(x')) | 0 \rangle|^2$ 
+
+Key Differences 
+
+• FidelityQuantumKernel: it uses a BaseStateFidelity primitive based on the **Compute-Uncompute** algorithm. It is the general-purpose class intended for both real quantum hardware and standard simulators. Typically, it scales as O(N^2) because it must run circuits for every pair of data points.
+
+• FidelityStatevectorKernel: it is optimized specifically for (and limited to) classically simulated statevectors. It directly uses the Qiskit Statevector class. It is significantly faster for classical simulation because it caches statevectors to avoid redundant computations. It can reduce the number of required operations from O(N^2) to O(N) for some datasets by storing the mapped states.
+
+The FidelityStatevectorKernel can also be used with the Aer simulator, specifically through the use of AerStatevector. However, there are significant nuances regarding speed and compatibility compared to the standard FidelityQuantumKernel. While the default FidelityStatevectorKernel uses the standard Qiskit Statevector class, it is possible to pass AerStatevector as the statevector_type in the constructor. This allows the leverage of Aer's high-performance simulation methods, such as GPU acceleration or multi-threading, within the kernel's workflow. The speed advantages depend on how Aer is used:
+
+* Algorithmic Efficiency ($O(N)$ vs $O(N^2)$): The FidelityStatevectorKernel is inherently faster than the FidelityQuantumKernel for classical simulation because it caches the statevectors for each data point. This reduces the number of circuit executions from $O(N^2)$ (computing every pair) to $O(N)$ (computing each state once and then doing simple vector dot products).
+* AerStatevector vs. Basic Statevector: Using the AerSimulator with method="statevector" is generally much faster than basic Python-based statevector simulation for larger circuits (typically >15 qubits) due to its C++ backend and optimization.
+* GPU Acceleration: If AerStatevector is used with a GPU (device='GPU'), massive speedups can be achieved for high-qubit feature maps compared to standard CPU simulation. 
+
+Comparison for Simulators
+
+| Feature | FidelityQuantumKernel + Aer Sampler | FidelityStatevectorKernel + AerStatevector |
+|---|---|---|
+| Circuit Executions | $N^2$ (Slow for large datasets) | $N$ (Fast for large datasets) |
+| Noise Support | Supports Aer noise models | Noiseless only (Exact statevector) |
+| Best For | Testing noise/shots impact | Quick proof-of-concept / Large datasets |
+| Backend | General Sampler interface | Specific to Statevector types |
+
+Note: If the goal is to simulate noisy environments (as from a real quantum device), one must use the FidelityQuantumKernel with an AerSimulator instance, as the FidelityStatevectorKernel is mathematically defined only for pure, noiseless states.  
+
+</div>
