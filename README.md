@@ -43,7 +43,7 @@ conda deactivate
 
 CQ-ESN adopts the `qiskit_machine_learning` library, which provides a convenient interface for computing quantum kernels using various quantum circuits and feature maps. 
 
-Additional details about CQ-ESN implementation can be found in the jupyter notebook CQ_ESN_readme.ipynb located in this folder.
+Additional details about CQ-ESN implementation can be found in the jupyter notebook **CQ_ESN_readme.ipynb** located in this folder.
 
 </div>
 
