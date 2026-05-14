@@ -50,6 +50,7 @@ Additional details about CQ-ESN implementation can be found in the jupyter noteb
 
 <div style="border:1px solid #ccc; border-radius:6px; padding:12px; background: #050094; max-width:90%; margin-bottom:20px; margin-left:20px; margin-right:20px;">
 
+
 #### CQ-ESN Forecasting strategy
 
 Several examples of how to run CQ-ESN for forecasting are provided in the jupyter notebooks inside the folder **tests**. The task at hand is to forecast global average surface temperatures (TAVG) using historical climate data provided by the [Berkeley Earth](https://berkeleyearth.org/data/) project.
@@ -63,4 +64,21 @@ The TAVG dataset used in the examples is a subset of the **global** average surf
 The dataset is multivaried (global + local, 19 variables), but we focus on forecasting and plotting primarily the global average surface temperature (TAVG). Thus, while CQ-ESN forecasts all 19 variables in the **horizon** in order to roll forward by 1 timestep the **lag** of time used for prediction, only the global average surface temperature (TAVG) is plotted.
 
 Note that this dataset is not ideal for forecasting, as it is relatively small (720 monthly data points) and has a strong trend. Popular ESN programs for climate predictions (e.g., [here](https://xesn.readthedocs.io/en/latest/)) typically perform very well in the training range, but fail to extrapolate the strong trend in the test range, yielding a periodic but "flat" forecast. CQ-ESN is not designed to solve this problem, but rather to explore the contribution of quantum effects in ESNs. Despite this design bias CQ-ESN performs reasonably well also in the test range.
+
+#### OUTCOME
+
+A very large number of different CQ-ESN settings (only a few of which are reported in the **tests** folder) were tested. Altogether, the best results were obtained using:
+
+- Complex-valued reservoirs and states
+- Kernel Ridge Regression readout
+- States dimensionality reduction by SVD
+- Normalization of the states prior to calculating the $W_{out}$ weight matrix
+- Denormalization of the predictions
+
+##### Important considerations:
+
+1. **Complex-valued** reservoirs and states produce only a minor improvement of the evaluation metrics (NRMSE,MAE,IQR area) *versus* the corresponding **real-valued** reservoirs and states. 
+2. **Quantum kernels** do not appear to produce an improvement of the metrics versus the equivalent **Classical Kernels** with the additional drawback of several orders of magnitude slow-down.
+3. **States Normalization** and **Predictions Denormalization** appear to be the most significant factor in achieve a decrease of the Interquartile Area of the distribution of both ***non-autoregressive*** and ***autoregressive*** predictions, when multiple CQ-ESN runs are carried out with random initialization of the reservoir parameters.
+
 
