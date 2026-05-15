@@ -41,7 +41,11 @@ conda install -c conda-forge umap-learn
 conda deactivate    
 ```
 
-CQ-ESN adopts the `qiskit_machine_learning` library, which provides a convenient interface for computing quantum kernels using various quantum circuits and feature maps. 
+CQ-ESN offers a choice of four different reservoir architectures (custom, ER *Erdos-Renyi*, BA *Barabasi-Albert*, WS *Watts-Strogatz small world*) with corresponding customizable parameters, including real-valued or complex-valued reservoir weights.
+
+CQ-ESN adopts the `qiskit_machine_learning` library, which provides a convenient interface for computing quantum kernels using various quantum circuits and feature maps. Real- or complex-valued feature encoding into quantum state vectors is currently possible either via direct *amplitude encoding* or via *efficient-su2* mapping, with several options for additional qubits entanglements.
+
+All quantum calculations are currently implemented as *classical* noiseless simulations using qiskit circuits and primitives.
 
 Additional details about CQ-ESN implementation can be found in the jupyter notebook **CQ_ESN_readme.ipynb** located in this folder.
 
@@ -72,13 +76,13 @@ A very large number of different CQ-ESN settings (only a few of which are report
 - Complex-valued reservoirs and states
 - Kernel Ridge Regression readout
 - States dimensionality reduction by SVD
-- Normalization of the states prior to calculating the $W_{out}$ weight matrix
+- Normalization of the states prior to calculating the *readout* $W_{out}$ weight matrix
 - Denormalization of the predictions
 
 ##### Important considerations:
 
-1. **Complex-valued** reservoirs and states produce only a minor improvement of the evaluation metrics (NRMSE,MAE,IQR area) *versus* the corresponding **real-valued** reservoirs and states. 
-2. **Quantum kernels** (with different strategies of data encoding and qubits entanglement) do not appear to produce an improvement of the metrics versus the equivalent **Classical Kernels** with the additional drawback of several orders of magnitude slow-down.
+1. **Complex-valued** reservoirs and states produce only a minor improvement of the evaluation metrics (NRMSE, MAE, IQR area, Min-Max area) *versus* the corresponding **real-valued** reservoirs and states. 
+2. **Quantum kernels** (with different strategies of data encoding and qubits entanglement) do not appear to produce an improvement of the metrics versus the equivalent **Classical Kernels**, with the additional drawback of several orders of magnitude slow-down.
 3. **States Normalization** and **Predictions Denormalization** appear to be the most significant factor in achieving a decrease of the Interquartile Area of the distribution of both ***non-autoregressive*** and ***autoregressive*** predictions, when multiple CQ-ESN runs (i.e., 200 trials in the examples of the **tests** folder) are carried out with random initialization of the reservoir parameters.
 
 In conclusion, while limited to experience with just the climate TAVG dataset, testing with CQ-ESN points to a possible avenue for ***dequantizing*** quantum-based ESN protocols, by adding <u>complex-valued reservoirs</u> and <u>states normalization</u> to classical protocols with the goal of reducing prediction errors/uncertainties.  
