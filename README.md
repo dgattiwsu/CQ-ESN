@@ -75,7 +75,7 @@ A very large number of different CQ-ESN settings (only a few of which are report
 
 - Complex-valued reservoirs and states
 - Kernel Ridge Regression readout
-- States dimensionality reduction by SVD
+- States dimensionality reduction by SVD or SVD + UMAP
 - Normalization of the states prior to calculating the *readout* $W_{out}$ weight matrix
 - Denormalization of the predictions
 
